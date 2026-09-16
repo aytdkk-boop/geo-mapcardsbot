@@ -8,6 +8,42 @@
     <style>
         html, body { margin: 0; padding: 0; height: 100%; }
         #map { width: 100%; height: 100vh; }
+
+        /* Убираем "устаревший" вид контролов Leaflet */
+        .leaflet-control-zoom a {
+            background-color: #fff;
+            color: #333;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            border-radius: 8px !important;
+            margin-bottom: 4px;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: #f2f2f2;
+        }
+        .leaflet-control-attribution {
+            background: rgba(255,255,255,0.8);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 6px 0 0 0;
+        }
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .leaflet-popup-content {
+            margin: 12px 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .leaflet-popup-tip {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 <body>
@@ -18,19 +54,59 @@
         const lat = parseFloat(params.get('lat')) || 55.75;
         const lon = parseFloat(params.get('lon')) || 37.62;
 
-        const map = L.map('map').setView([lat, lon], 16);
+        const map = L.map('map', {
+            zoomControl: true,
+            attributionControl: true,
+        }).setView([lat, lon], 17);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap',
-            maxZoom: 19,
+        // ✅ CartoDB Voyager — выглядит как Яндекс.Карты
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
         }).addTo(map);
 
-        const marker = L.marker([lat, lon]).addTo(map);
-        marker.bindPopup(`<b>Адрес найден</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}`).openPopup();
+        // Красивая метка (красная точка с тенью, как в Яндекс)
+        const marker = L.marker([lat, lon], {
+            icon: L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div style="
+                        width: 28px; height: 28px;
+                        background: #ff3b30;
+                        border: 3px solid #fff;
+                        border-radius: 50% 50% 50% 0;
+                        transform: rotate(-45deg);
+                        box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                        position: relative;
+                    ">
+                        <div style="
+                            position: absolute;
+                            top: 50%; left: 50%;
+                            transform: translate(-50%, -50%) rotate(45deg);
+                            width: 8px; height: 8px;
+                            background: #fff;
+                            border-radius: 50%;
+                        "></div>
+                    </div>
+                `,
+                iconSize: [28, 28],
+                iconAnchor: [14, 28],
+                popupAnchor: [0, -28],
+            })
+        }).addTo(map);
 
+        marker.bindPopup(
+            `<b>Адрес найден</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}`
+        ).openPopup();
+
+        // Автооткрытие Web App
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
+            // Красим цвет хедера под тему пользователя
+            window.Telegram.WebApp.setHeaderColor('#ffffff');
+            window.Telegram.WebApp.setBackgroundColor('#ffffff');
         }
     </script>
 </body>
